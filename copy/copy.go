@@ -774,6 +774,22 @@ func isTTY(w io.Writer) bool {
 
 // copyLayers copies layers from ic.src/ic.c.rawSource to dest, using and updating ic.manifestUpdates if necessary and ic.canModifyManifest.
 func (ic *imageCopier) copyLayers(ctx context.Context) error {
+	var err error
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Error("==========================================================================")
+			logrus.Error(err)
+			//check exactly what the panic was and create error.
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+			case error:
+				err = x
+			default:
+				err = errors.New("Unknow panic")
+			}
+		}
+	}()
 	srcInfos := ic.src.LayerInfos()
 	numLayers := len(srcInfos)
 	updatedSrcInfos, err := ic.src.LayerInfosForCopy(ctx)
